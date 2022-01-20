@@ -3,13 +3,9 @@ import { Types } from "mongoose"
 import { Request } from "express"
 import { Strategy, StrategyOptions } from "passport-jwt"
 import { UserService } from "user/user.service"
-import { ConfigService } from "@nestjs/config"
 
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    private userService: UserService,
-    private configService: ConfigService,
-  ) {
+  constructor(private userService: UserService) {
     super({
       jwtFromRequest: (req: Request) => {
         if (req.headers.authorization) {
@@ -17,7 +13,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         }
         return null
       },
-      secretOrKey: configService.get("SECRET_KEY"),
+      secretOrKey: process.env["SECRET_KEY"],
       ignoreExpiration: true,
     } as StrategyOptions)
   }
