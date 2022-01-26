@@ -1,1 +1,1 @@
-GET http://localhost:5000/user HTTP/1.1
+GET http://localhost:4000/tweet/all HTTP/1.1

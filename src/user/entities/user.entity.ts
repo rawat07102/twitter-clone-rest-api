@@ -4,6 +4,9 @@ import { SchemaTypes, Types } from "mongoose"
 @Schema()
 export class User {
   @Prop()
+  name: string
+
+  @Prop()
   username: string
 
   @Prop()
@@ -23,6 +26,9 @@ export class User {
 
   @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: "Notification" }] })
   notifications: Types.ObjectId[]
+
+  @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: "Tweet" }] })
+  timeline: Types.ObjectId[]
 }
 
 export const UserSchema = SchemaFactory.createForClass(User).set("toJSON", {

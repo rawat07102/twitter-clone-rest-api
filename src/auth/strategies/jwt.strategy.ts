@@ -1,11 +1,12 @@
 import { PassportStrategy } from "@nestjs/passport"
-import { Types } from "mongoose"
+import { InjectModel } from "@nestjs/mongoose"
+import { Model } from "mongoose"
 import { Request } from "express"
 import { Strategy, StrategyOptions } from "passport-jwt"
-import { UserService } from "user/user.service"
+import { User } from "user/entities/user.entity"
 
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private userService: UserService) {
+  constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {
     super({
       jwtFromRequest: (req: Request) => {
         if (req.headers.authorization) {
@@ -13,13 +14,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         }
         return null
       },
-      secretOrKey: process.env["SECRET_KEY"],
+      secretOrKey: process.env.SECRET_KEY,
       ignoreExpiration: true,
     } as StrategyOptions)
   }
 
   async validate(payload: { id: string; username: string }) {
-    const user = await this.userService.findById(new Types.ObjectId(payload.id))
+    const user = await this.userModel.findById(payload.id)
     if (!user) {
       return false
     }

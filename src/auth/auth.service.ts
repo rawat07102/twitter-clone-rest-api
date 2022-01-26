@@ -10,15 +10,20 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async createAuthToken(loginDTO: LoginDTO) {
+  async login(loginDTO: LoginDTO) {
     const user = await this.userService.findByUsername(loginDTO.username)
     if (!user || user.password !== loginDTO.password) {
       throw new UnauthorizedException()
     }
 
-    return this.jwtService.sign({
+    const accessToken = await this.jwtService.signAsync({
       id: user.id,
       username: user.username,
     })
+
+    return {
+      accessToken,
+      id: user.id,
+    }
   }
 }

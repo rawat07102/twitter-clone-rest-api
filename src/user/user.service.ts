@@ -19,17 +19,20 @@ export class UserService {
   async create(createUserDTO: CreateUserDTO) {
     const user = new this.userModel(createUserDTO)
     await user.save()
-    return user
+    return user.id
   }
 
   async findAll(skip = 0, limit = 10) {
-    return this.userModel.find().skip(skip).limit(limit).exec()
+    return this.userModel
+      .find()
+      .skip(skip)
+      .limit(limit)
+      .select("id username")
+      .exec()
   }
 
   async findById(id: Types.ObjectId) {
-    const userDoc = await this.userModel
-      .findById(id)
-      .populate<PopulatedUser>("tweets")
+    const userDoc = await this.userModel.findById(id).select("-password")
     return userDoc
   }
 
@@ -64,16 +67,7 @@ export class UserService {
     follower.following.push(user.id)
     await user.save()
     await follower.save()
-    return true
-  }
-
-  async delete(id: Types.ObjectId) {
-    return this.userModel.findByIdAndDelete(id)
-  }
-
-  async deleteAll() {
-    const query = await this.userModel.deleteMany()
-    return query.deletedCount
+    return { user, follower }
   }
 
   async removeFollower(userId: Types.ObjectId, followerId: Types.ObjectId) {
@@ -84,5 +78,14 @@ export class UserService {
     await user.save()
     await follower.save()
     return true
+  }
+
+  async delete(id: Types.ObjectId) {
+    return this.userModel.findByIdAndDelete(id)
+  }
+
+  async deleteAll() {
+    const query = await this.userModel.deleteMany()
+    return query.deletedCount
   }
 }

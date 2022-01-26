@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common"
-import { ConfigModule } from "@nestjs/config"
 import { MongooseModule } from "@nestjs/mongoose"
+import { PassportModule } from "@nestjs/passport"
 
 import { UserModule } from "user/user.module"
 import { TweetModule } from "tweet/tweet.module"
@@ -12,14 +12,14 @@ import { AppService } from "./app.service"
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    MongooseModule.forRoot(process.env["MONGO_URI"]),
+    MongooseModule.forRoot(process.env.MONGO_URI),
     UserModule,
     TweetModule,
     AuthModule,
     NotificationModule,
+    PassportModule.register({
+      defaultStrategy: "jwt",
+    }),
     // ChatModule,
   ],
   providers: [AppService],

@@ -1,7 +1,5 @@
 import {
   BadRequestException,
-  forwardRef,
-  Inject,
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common"
@@ -51,6 +49,11 @@ export class TweetService {
       .populate<Pick<PopulatedTweet, "author" | "replies" | "replyTo">>(
         "author replies replyTo",
       )
+  }
+
+  async timeline(id: Types.ObjectId) {
+    const user = await this.userService.findById(id)
+    return user.timeline
   }
 
   async update(id: Types.ObjectId, updateTweetDTO: UpdateTweetDTO) {

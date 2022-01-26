@@ -1,6 +1,6 @@
-import { Types } from "mongoose"
+import { ApiProperty } from "@nestjs/swagger"
 
 export class SendMessageDTO {
-  chatId: Types.ObjectId
+  @ApiProperty()
   body: string
 }

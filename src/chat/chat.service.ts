@@ -36,7 +36,11 @@ export class ChatService {
     return chat
   }
 
-  async create({ toId, messageBody }: CreateChatDTO, fromId: Types.ObjectId) {
+  async create(
+    toId: Types.ObjectId,
+    fromId: Types.ObjectId,
+    { messageBody }: CreateChatDTO,
+  ) {
     const chat = new this.chatModel()
     const fromUser = await this.userService.findById(fromId)
     const toUser = await this.userService.findById(toId)
@@ -49,9 +53,13 @@ export class ChatService {
     return chat
   }
 
-  async sendMessage({ body, chatId }: SendMessageDTO, from: Types.ObjectId) {
+  async sendMessage(
+    chatId: Types.ObjectId,
+    fromId: Types.ObjectId,
+    { body }: SendMessageDTO,
+  ) {
     const chat = await this.chatModel.findById(chatId)
-    const fromUser = await this.userService.findById(from)
+    const fromUser = await this.userService.findById(fromId)
     const message = this.newMessage(body, fromUser)
 
     chat.messages.push(message)
