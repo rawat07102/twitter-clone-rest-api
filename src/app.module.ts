@@ -8,6 +8,7 @@ import { AuthModule } from "auth/auth.module"
 import { NotificationModule } from "notification/notification.module"
 
 import { AppService } from "./app.service"
+import { ScheduleModule } from "@nestjs/schedule"
 // import { ChatModule } from "chat/chat.module"
 
 @Module({
@@ -20,6 +21,7 @@ import { AppService } from "./app.service"
     PassportModule.register({
       defaultStrategy: "jwt",
     }),
+    ScheduleModule.forRoot(),
     // ChatModule,
   ],
   providers: [AppService],

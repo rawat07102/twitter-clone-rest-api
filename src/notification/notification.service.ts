@@ -13,13 +13,25 @@ export class NotificationService {
     private userService: UserService,
   ) {}
 
-  async create(userId: Types.ObjectId, title: string, type: NotificationType) {
+  private async create(
+    user: Types.ObjectId,
+    tweet: Types.ObjectId,
+    type: NotificationType,
+  ) {
     const notification = new this.notificationModel({
-      title,
+      tweet,
       type,
     })
-    await this.userService.addNotification(userId, notification.id) // await notification.save()
+    await this.userService.addNotification(user, notification.id)
+    await notification.save()
     return notification
+  }
+
+  async createNewTweetNotification(
+    user: Types.ObjectId,
+    tweet: Types.ObjectId,
+  ) {
+    return this.create(user, tweet, NotificationType.NEW_TWEET)
   }
 
   async getById(id: Types.ObjectId) {

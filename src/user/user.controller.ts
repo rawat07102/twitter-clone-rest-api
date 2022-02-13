@@ -7,6 +7,8 @@ import {
   Delete,
   UseGuards,
   Patch,
+  UseInterceptors,
+  UploadedFiles,
 } from "@nestjs/common"
 import { UserService } from "./user.service"
 import { CreateUserDTO } from "./dto/create-user.dto"
@@ -14,14 +16,17 @@ import { Types } from "mongoose"
 import { CurrentUser } from "auth/decorators/currentUser.decorator"
 import { CurrentUserDTO } from "auth/dto/current-user.dto"
 import { JwtAuthGuard } from "auth/guard/jwt.guard"
-import { ApiBearerAuth, ApiParam, ApiTags } from "@nestjs/swagger"
+import { FileFieldsInterceptor } from "@nestjs/platform-express"
+import { ImageService } from "image/image.service"
 
-@ApiTags("user")
 @Controller("user")
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly imageService: ImageService,
+  ) {}
 
-  @Post()
+  @Post("signup")
   create(@Body() createUserDTO: CreateUserDTO) {
     return this.userService.create(createUserDTO)
   }
@@ -32,20 +37,64 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get("current")
+  @Get("session")
   async currentUser(@CurrentUser() currentUser: CurrentUserDTO) {
-    return this.userService.findById(currentUser.id)
+    const user = await this.userService.findById(currentUser.id)
+    return {
+      id: user.id,
+      username: user.username,
+    }
   }
 
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @ApiParam({
-    name: "id",
-    type: String,
-  })
-  @Get(":id")
+  @Get("byId/:id")
   async getById(@Param("id") id: Types.ObjectId) {
     return this.userService.findById(id)
+  }
+
+  @Get(":username")
+  async getByUsername(@Param("username") username: string) {
+    const userDoc = await this.userService.findByUsername(username)
+    return this.userService.sanitize(userDoc)
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: "profilePic", maxCount: 1 },
+      { name: "headerPic", maxCount: 1 },
+    ]),
+  )
+  @Patch("profile/setup")
+  async setupProfile(
+    @CurrentUser() currentUser: CurrentUserDTO,
+    @Body("bio") bio: string,
+    @UploadedFiles()
+    files: {
+      profilePic: Express.Multer.File[]
+      headerPic: Express.Multer.File[]
+    },
+  ) {
+    const profileFile = files.profilePic[0]
+    const headerFile = files.headerPic[0]
+    const profilePic = await this.imageService.create({
+      data: profileFile.buffer.toString("base64"),
+      mimetype: profileFile.mimetype,
+    })
+    const headerPic = await this.imageService.create({
+      data: headerFile.buffer.toString("base64"),
+      mimetype: headerFile.mimetype,
+    })
+
+    const user = await this.userService.findById(currentUser.id)
+    await this.imageService.delete(user.profilePic)
+    await this.imageService.delete(user.headerPic)
+
+    return this.userService.setupProfile(currentUser.id, {
+      bio,
+      headerPic: headerPic.id,
+      profilePic: profilePic.id,
+    })
   }
 
   @UseGuards(JwtAuthGuard)

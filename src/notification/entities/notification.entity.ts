@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose"
-import { Document } from "mongoose"
+import { Document, SchemaTypes, Types } from "mongoose"
 
 export type NotificationDoc = Notification & Document
 
@@ -14,8 +14,8 @@ export class Notification {
   @Prop({ type: { enum: notificationEnum }, required: true })
   type: NotificationType
 
-  @Prop({ required: true })
-  title: string
+  @Prop({ type: SchemaTypes.ObjectId, ref: "Tweet", required: true })
+  tweet: Types.ObjectId
 
   @Prop({ type: Boolean, default: false })
   read: boolean

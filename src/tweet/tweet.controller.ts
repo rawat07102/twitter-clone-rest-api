@@ -6,13 +6,18 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common"
+import { FileInterceptor } from "@nestjs/platform-express"
 import { ApiTags } from "@nestjs/swagger"
 import { CurrentUser } from "auth/decorators/currentUser.decorator"
 import { CurrentUserDTO } from "auth/dto/current-user.dto"
 import { JwtAuthGuard } from "auth/guard/jwt.guard"
+import { ImageService } from "image/image.service"
 import { Types } from "mongoose"
+import { UserService } from "user/user.service"
 import { CreateTweetDTO } from "./dto/create-tweet.dto"
 import { UpdateTweetDTO } from "./dto/update-tweet.dto"
 import { TweetService } from "./tweet.service"
@@ -20,15 +25,27 @@ import { TweetService } from "./tweet.service"
 @ApiTags("tweet")
 @Controller("tweet")
 export class TweetController {
-  constructor(private readonly tweetService: TweetService) {}
+  constructor(
+    private readonly tweetService: TweetService,
+    private readonly imageService: ImageService,
+    private readonly userService: UserService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor("file"))
   @Post()
-  create(
+  async create(
     @Body() createTweetDTO: CreateTweetDTO,
+    @UploadedFile() file: Express.Multer.File,
     @CurrentUser() currentUser: CurrentUserDTO,
   ) {
-    return this.tweetService.create(currentUser.id, createTweetDTO)
+    let imageId = null
+    if (file) {
+      const { buffer, mimetype } = file
+      const data = buffer.toString("base64")
+      imageId = await this.imageService.create({ data, mimetype })
+    }
+    return this.tweetService.create(currentUser.id, createTweetDTO, imageId)
   }
 
   @Get("all")
@@ -38,7 +55,7 @@ export class TweetController {
 
   @UseGuards(JwtAuthGuard)
   @Get("timeline")
-  tweetsForMe(@CurrentUser() currentUser: CurrentUserDTO) {
+  timeline(@CurrentUser() currentUser: CurrentUserDTO) {
     return this.tweetService.timeline(currentUser.id)
   }
 
@@ -62,7 +79,11 @@ export class TweetController {
   }
 
   @Delete("delete/:id")
-  delete(@Param("id") id: Types.ObjectId) {
+  async delete(
+    @Param("id") id: Types.ObjectId,
+    @CurrentUser() currentUser: CurrentUserDTO,
+  ) {
+    await this.userService.removeTweet(currentUser.id, id)
     return this.tweetService.delete(id)
   }
 }

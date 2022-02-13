@@ -10,7 +10,6 @@ import { UserService } from "user/user.service"
 import { Tweet } from "./entities/tweet.entity"
 import { CreateTweetDTO } from "./dto/create-tweet.dto"
 import { UpdateTweetDTO } from "./dto/update-tweet.dto"
-import { NotificationType } from "notification/entities/notification.entity"
 import { NotificationService } from "notification/notification.service"
 import { PopulatedTweet } from "./interfaces/tweet.populated"
 
@@ -22,20 +21,16 @@ export class TweetService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  async create(authorId: Types.ObjectId, createTweetDTO: CreateTweetDTO) {
-    const tweet = new this.tweetModel(createTweetDTO)
-    const user = await this.userService.findById(authorId)
-    tweet.author = user.id
-
-    for (let i = 0; i < user.followers.length; i++) {
-      await this.notificationService.create(
-        user.followers[i],
-        "New Tweet",
-        NotificationType.NEW_TWEET,
-      )
-    }
-
-    await tweet.save()
+  async create(
+    authorId: Types.ObjectId,
+    createTweetDTO: CreateTweetDTO,
+    imageId: Types.ObjectId | null,
+  ) {
+    const tweet = await this.tweetModel.create({
+      ...createTweetDTO,
+      image: imageId,
+    })
+    await this.userService.addNewTweet(authorId, tweet.id)
     return tweet
   }
 
@@ -54,6 +49,26 @@ export class TweetService {
   async timeline(id: Types.ObjectId) {
     const user = await this.userService.findById(id)
     return user.timeline
+  }
+
+  async addLike(userId: Types.ObjectId, tweetId: Types.ObjectId) {
+    await this.tweetModel.findByIdAndUpdate(tweetId, {
+      $inc: {
+        likes: 1,
+      },
+    })
+    await this.userService.addLikedTweet(userId, tweetId)
+    return true
+  }
+
+  async removeLike(userId: Types.ObjectId, tweetId: Types.ObjectId) {
+    await this.tweetModel.findByIdAndUpdate(tweetId, {
+      $inc: {
+        likes: -1,
+      },
+    })
+    await this.userService.addLikedTweet(userId, tweetId)
+    return true
   }
 
   async update(id: Types.ObjectId, updateTweetDTO: UpdateTweetDTO) {

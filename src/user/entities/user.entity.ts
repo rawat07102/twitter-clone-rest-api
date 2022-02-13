@@ -15,6 +15,12 @@ export class User {
   @Prop({ default: "" })
   bio: string
 
+  @Prop({ type: SchemaTypes.ObjectId, ref: "Image" })
+  profilePic?: Types.ObjectId
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: "Image" })
+  headerPic?: Types.ObjectId
+
   @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: "Tweet" }] })
   tweets: Types.ObjectId[]
 
@@ -29,6 +35,9 @@ export class User {
 
   @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: "Tweet" }] })
   timeline: Types.ObjectId[]
+
+  @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: "Tweet" }] })
+  likedTweets: Types.ObjectId[]
 }
 
 export const UserSchema = SchemaFactory.createForClass(User).set("toJSON", {
