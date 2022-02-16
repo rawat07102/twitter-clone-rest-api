@@ -27,8 +27,9 @@ export class TweetService {
     imageId: Types.ObjectId | null,
   ) {
     const tweet = await this.tweetModel.create({
-      ...createTweetDTO,
+      body: createTweetDTO.body,
       image: imageId,
+      author: authorId,
     })
     await this.userService.addNewTweet(authorId, tweet.id)
     return tweet
