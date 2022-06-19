@@ -64,6 +64,11 @@ export class TweetController {
     return this.tweetService.findById(id)
   }
 
+  @Get("who-to-follow")
+  async whoToFollow() {
+    return this.userService.whoToFollow()
+  }
+
   @UseGuards(JwtAuthGuard)
   @Patch(":id")
   update(

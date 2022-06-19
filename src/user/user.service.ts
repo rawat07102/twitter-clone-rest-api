@@ -36,6 +36,37 @@ export class UserService {
     return userDoc
   }
 
+  async search(query: string) {
+    const pipeline = [
+      {
+        // $search: {
+        //   autocomplete: { query, path: ["username", "name"] },
+        //   index: "search_users",
+        // },
+        $search: {
+          index: "search_users",
+          compound: {
+            should: [
+              {
+                autocomplete: { query, path: "username" },
+              },
+              {
+                autocomplete: { query, path: "name" },
+              },
+            ],
+          },
+        },
+      },
+      { $limit: 5 },
+    ]
+    const users = await this.userModel.aggregate(pipeline).exec()
+    return users.map((u) => this.sanitize(u))
+  }
+
+  async whoToFollow() {
+    return this.userModel.find().sort("-followers").limit(2).exec()
+  }
+
   async profile(id: Types.ObjectId) {
     const userDoc = await this.userModel
       .findById(id)
@@ -58,14 +89,9 @@ export class UserService {
     }
   }
 
-  async sanitize(
-    userDoc: Document<any, any, User> &
-      User & {
-        _id: Types.ObjectId
-      },
-  ) {
-    const { password, ...user } = userDoc.toJSON()
-    return user
+  async sanitize(user: User) {
+    const { password, ...rest } = user
+    return rest
   }
 
   async findUserNotifications(id: Types.ObjectId) {
@@ -85,7 +111,7 @@ export class UserService {
       },
     })
 
-    // add new tweet followers' timeline
+    // add new tweet to followers's timeline
     for (let i = 0; i < user.followers.length; i++) {
       const follower = user.followers[i]
       await this.addTweetToTimeline(follower, tweetId)

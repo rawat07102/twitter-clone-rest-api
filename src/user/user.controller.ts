@@ -58,6 +58,11 @@ export class UserController {
     return this.userService.sanitize(userDoc)
   }
 
+  @Get("search/:searchQuery")
+  async search(@Param("searchQuery") searchQuery: string) {
+    return this.userService.search(searchQuery)
+  }
+
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileFieldsInterceptor([

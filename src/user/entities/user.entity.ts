@@ -3,10 +3,10 @@ import { SchemaTypes, Types } from "mongoose"
 
 @Schema()
 export class User {
-  @Prop()
+  @Prop({ text: true })
   name: string
 
-  @Prop()
+  @Prop({ text: true })
   username: string
 
   @Prop()
@@ -40,6 +40,8 @@ export class User {
   likedTweets: Types.ObjectId[]
 }
 
-export const UserSchema = SchemaFactory.createForClass(User).set("toJSON", {
-  getters: true,
-})
+export const UserSchema = SchemaFactory.createForClass(User)
+  .set("toJSON", {
+    getters: true,
+  })
+  .index({ name: "text", username: "text" })

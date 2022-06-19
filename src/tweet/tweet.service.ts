@@ -36,7 +36,12 @@ export class TweetService {
   }
 
   async findAll(skip = 0, limit = 10) {
-    return this.tweetModel.find().skip(skip).limit(limit).exec()
+    return this.tweetModel
+      .find()
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .exec()
   }
 
   async findById(id: Types.ObjectId) {
